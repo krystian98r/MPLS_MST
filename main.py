@@ -9,6 +9,12 @@ class Pakiet:
     bledny = FALSE
     etykietaBlad = FALSE
 
+
+nadaneEtykiety = 0
+blednePakiety = 0
+bledyNadawaniaEtykiet = 0
+
+
 def czas():
     now = datetime.now()
     return now.strftime("\n[%H:%M:%S] ")
@@ -16,26 +22,61 @@ def czas():
 
 def log(tekst):
     textareaWin3.insert(INSERT, czas() + tekst)
-    textareaWin3.pack(expand=1, fill=BOTH)
+    textareaWin3.grid(column=0, row=0, rowspan=10)
 
+def wyczysc_okno():
+    textareaWin3.delete('1.0', END)
+    global nadaneEtykiety
+    global blednePakiety
+    global bledyNadawaniaEtykiet
+    nadaneEtykiety = 0
+    blednePakiety = 0
+    bledyNadawaniaEtykiet = 0
+    l1 = Label(win3, text=nadaneEtykiety)
+    l2 = Label(win3, text=blednePakiety)
+    l3 = Label(win3, text=bledyNadawaniaEtykiet)
+    l1.grid(column=2, row=0)
+    l2.grid(column=2, row=1)
 
 def wyslij_wiadomosc():
+    global nadaneEtykiety
+    global blednePakiety
+    global bledyNadawaniaEtykiet
+
+    pakiet = Pakiet()
+    if czyBledny.get() == 1:
+        pakiet.bledny = TRUE
+    else:
+        pakiet.bledny = FALSE
+
+    if czyBladEtykiety.get() == 1:
+        pakiet.etykietaBlad = TRUE
+    else:
+        pakiet.etykietaBlad = FALSE
+
+    pakiet.klasaFEC = entry2.get()
+    pakiet.etykieta = entry3.get()
+
+    textareaWin2.delete('1.0', END)
+
     log("Otrzymano pakiet. Sprawdź czy jest sklasyfikowany.")
-    if pakiet.klasaFEC == 0:
+    if not pakiet.klasaFEC:
         log("Pakiet nie posiada klasy. Przypisz klasę FEC")
-        pakiet.klasaFEC = 1
+        pakiet.klasaFEC = "1234"
     else:
         log("Pakiet sklasyfikowany. Przejdź do nadawania etykiety.")
 
     pakiet.wiadomosc = textareaWin1.get("1.0", END)
     log("Sprawdź czy pakiet ma etykietę.")
-    if pakiet.etykieta == 0: # jeśli pakiet nie ma etykiety
+    if not pakiet.etykieta:  # jeśli pakiet nie ma etykiety
         log("Brak etykiety. Odczytaj klasę pakietu.")
         log("Nadaj nową etykietę.")
-        pakiet.etykieta = 1234
-        if pakiet.etykietaBlad: # jeśli niepowiodło się nadawanie etykiety
+        pakiet.etykieta = "1234"
+        nadaneEtykiety = nadaneEtykiety + 1
+        if pakiet.etykietaBlad:  # jeśli niepowiodło się nadawanie etykiety
             log("Nie udało się nadać etykiety. Sprawdź poprawność pakietu.")
-            if pakiet.bledny: # jeśli pakiet jest błędny
+            bledyNadawaniaEtykiet = bledyNadawaniaEtykiet + 1
+            if pakiet.bledny:  # jeśli pakiet jest błędny
                 log("Pakiet uszkodzony. Zapisz w logach.")
             else:
                 log("Pakiet poprawny. Ponów nadawanie etykiety. Przekaż pakiet.")
@@ -48,39 +89,53 @@ def wyslij_wiadomosc():
         log("Odczytaj nową wartość etykiety i zweryfikuj")
         if pakiet.etykietaBlad:
             log("Wartość etykiety niepoprawna. Zapisz w logach.")
-        else:
-            pakiet.etykieta = 1324
-            log("Nadano etykietę.")
-            if pakiet.etykieta == 0:
-                log("Nie udało się nadać etykiety. Sprawdź poprawność pakietu.")
-                if pakiet.bledny:  # jeśli pakiet jest błędny
-                    log("Pakiet uszkodzony. Zapisz w logach.")
-                else:
-                    log("Pakiet poprawny. Ponów nadawanie etykiety. Przekaż pakiet.")
-                    textareaWin2.insert(INSERT, pakiet.wiadomosc)
+            log("Nie udało się nadać etykiety. Sprawdź poprawność pakietu.")
+            bledyNadawaniaEtykiet = bledyNadawaniaEtykiet + 1
+            if pakiet.bledny:  # jeśli pakiet jest błędny
+                log("Pakiet uszkodzony. Zapisz w logach.")
+                blednePakiety = blednePakiety + 1
             else:
-                log("Przekaż pakiet dalej.")
+                log("Pakiet poprawny. Ponów nadawanie etykiety. Przekaż pakiet.")
                 textareaWin2.insert(INSERT, pakiet.wiadomosc)
+        else:
+            pakiet.etykieta = "1234"
+            log("Nadano etykietę.")
+            nadaneEtykiety = nadaneEtykiety + 1
+            log("Przekaż pakiet dalej.")
+            textareaWin2.insert(INSERT, pakiet.wiadomosc)
 
-
-
-    textareaWin2.pack(expand=1, fill=BOTH)
+    l1 = Label(win3, text=nadaneEtykiety)
+    l2 = Label(win3, text=blednePakiety)
+    l3 = Label(win3, text=bledyNadawaniaEtykiet)
+    l1.grid(column=2, row=0)
+    l2.grid(column=2, row=1)
+    l3.grid(column=2, row=2)
+    textareaWin2.pack()
 
 
 win1 = Tk()
 win1.title("Użytkownik 1")
-win1.geometry("300x200")
-label1 = Label(win1, text="Wiadomość")
+win1.geometry("300x250")
 textareaWin1 = Text(win1, bg="white", fg="black", width=30, height="4", padx="5", pady="5")
 btn = Button(win1, text="Prześlij wiadomość", command=wyslij_wiadomosc)
-label2 = Label(win1, text="Wiadomość zwrotna")
-entry = Entry(win1, bg="white", fg="black", width=24)
+entry1 = Entry(win1, bg="white", fg="black", width=24)
+czyBledny = IntVar()
+czyBladEtykiety = IntVar()
+checkBtn1 = Checkbutton(win1, text="Błedny pakiet", variable=czyBledny)
+checkBtn2 = Checkbutton(win1, text="Błąd nadawania etykiety", variable=czyBladEtykiety)
+entry2 = Entry(win1, bg="white", fg="black", width=12)
+entry3 = Entry(win1, bg="white", fg="black", width=12)
 
-label1.pack()
-textareaWin1.pack()
-btn.pack()
-label2.pack()
-entry.pack()
+Label(win1, text="Wiadomość").grid(column=0, columnspan=2, row=0)
+textareaWin1.grid(column=0, columnspan=2, row=1)
+Label(win1, text="Opcje pakietu").grid(column=0, columnspan=2, row=2)
+checkBtn1.grid(column=0, row=3)
+checkBtn2.grid(column=1, row=3)
+Label(win1, text="Etykieta").grid(column=0, row=4)
+entry2.grid(column=1, row=4)
+Label(win1, text="Klasa FEC").grid(column=0, row=5)
+entry3.grid(column=1, row=5)
+btn.grid(column=0, columnspan=2, row=6)
 
 win2 = Tk()
 win2.title("Użytkownik 2")
@@ -91,19 +146,21 @@ textareaWin2 = Text(win2, bg="white", fg="black", width="30", height="4", padx="
 label.pack()
 textareaWin2.pack()
 
-# tutaj dodać jakieś wskaźniki istotne dla protokołu, countery itd. np. błędów czy innych takich
-# dashboardy
-
 win3 = Tk()
 win3.title("Przebieg protokołu")
-win3.geometry("650x300")
-textareaWin3 = Text(win3, bg="white", fg="black", width="80", height="20", padx="20", pady="10")
-textareaWin3.pack()
+win3.geometry("730x300")
+l1 = Label(win3, text=nadaneEtykiety)
+l2 = Label(win3, text=blednePakiety)
+l3 = Label(win3, text=bledyNadawaniaEtykiet)
 
-pakiet = Pakiet()
-pakiet.etykieta = 0
-pakiet.bledny = FALSE
-pakiet.etykietaBlad = TRUE
-pakiet.klasaFEC = 0
+Label(win3, text="Nadane etykiety").grid(column=1, row=0)
+l1.grid(column=2, row=0)
+Label(win3, text="Błedne pakiety").grid(column=1, row=1)
+l2.grid(column=2, row=1)
+Label(win3, text="Błędy nadawania etykiet").grid(column=1, row=2)
+l3.grid(column=2, row=2)
+textareaWin3 = Text(win3, bg="white", fg="black", width="70", height="20", padx="20", pady="10")
+textareaWin3.grid(column=0, row=0, rowspan=10)
+Button(win3, text="Wyczyść okno", command=wyczysc_okno).grid(column=1, columnspan=2, row=3)
 
 win3.mainloop()
